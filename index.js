@@ -28,6 +28,7 @@ const keyboard = [
   }]
 ];
 
+
 bot.setMyCommands([
   { command: '/start', description: "Initial greeting" },
 ])
@@ -35,6 +36,9 @@ bot.on('new_chat_members', (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.new_chat_participant.id;
   const msgId = msg.message_id;
+  // if(msg.chat.id != "-1001458873048") {
+  //   return bot.leaveChat(chatId);
+  // }
   if (!chats[msg.new_chat_member.id]) {
     chats[msg.new_chat_member.id] = {};
   }
@@ -115,9 +119,6 @@ bot.onText(/\/start(.+)/, (msg, match) => {
   if (chats[chatId]?.banned) {
     return bot.sendMessage(chatId, `You have been banned!`);
   }
-  // if(!chats[chatId]) {
-  //   return;
-  // }
   if (match[1].split("_")[1] == chatId) {
     let captcha = new Captcha(300);
     let keyboard = generateKeyboard(captcha.value);
@@ -176,7 +177,6 @@ bot.on('message', (msg) => {
 
 
 bot.on('callback_query', msg => {
-  console.log("////////////////////////////////");
   const data = msg.data;
   const chatId = msg.message.chat.id;
   if (chats[chatId]) {
