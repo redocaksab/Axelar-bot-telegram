@@ -1,7 +1,7 @@
 const TelegramBot = require('node-telegram-bot-api'); // подключаем node-telegram-bot-api
 const Captcha = require("@haileybot/captcha-generator");
 
-const token = '5076390048:AAG8XB6KkGugee5d5JKe_z8ugsSqNZz0Umw';
+const token = '5076390048:AAF_XKwea2GfPiojgxWkRxfCeUQbGJslbtQ';
 // включаем самого бота
 const bot = new TelegramBot(token, { polling: true });
 
@@ -176,6 +176,7 @@ bot.on('message', (msg) => {
 
 
 bot.on('callback_query', msg => {
+  console.log("////////////////////////////////");
   const data = msg.data;
   const chatId = msg.message.chat.id;
   if (chats[chatId]) {
@@ -205,13 +206,14 @@ bot.on('callback_query', msg => {
     } else {
       chats[chatId].code += data;
     }
-
+    bot.answerCallbackQuery(msg.id);
     return bot.editMessageText(`Your code: ${chats[chatId].code}`, {
       chat_id: chatId,
       message_id: chats[chatId].editMsgId,
     });
   }
 });
+
 
 
 
