@@ -1,7 +1,7 @@
 const TelegramBot = require('node-telegram-bot-api'); // подключаем node-telegram-bot-api
 const Captcha = require("@haileybot/captcha-generator");
 
-const token = '5076390048:AAF_XKwea2GfPiojgxWkRxfCeUQbGJslbtQ';
+const token = '5076390048:AAG1Hl1aVGFNFF00tJ6qI0k5DjkahzuIhRI';
 // включаем самого бота
 const bot = new TelegramBot(token, { polling: true });
 
@@ -27,12 +27,35 @@ const keyboard = [
     url: 'https://twitter.com/axelarcore'
   }]
 ];
-
+const docsKeyboard = [
+  [
+    {
+      text: 'Whitepaper',
+      url: 'https://axelar.network/wp-content/uploads/2021/07/axelar_whitepaper.pdf'
+    },
+  ],
+  [
+    {
+      text: 'Developer Documentation',
+      url: 'https://docs.axelar.dev/#/'
+    },
+  ],
+  [
+    {
+      text: 'Community Managed Axelar Academy',
+      url: 'https://axelar.academy/'
+    },
+  ],
+];
 
 bot.setMyCommands([
   { command: '/start', description: "Initial greeting" },
+  { command: '/about', description: "What is Axelar?" },
+  { command: '/sendmelinks', description: "Send me community links" },
+  { command: '/faq_docs', description: "Send me Axelar documentation please" },
 ])
 bot.on('new_chat_members', (msg) => {
+  console.log(msg)
   const chatId = msg.chat.id;
   const userId = msg.new_chat_participant.id;
   const msgId = msg.message_id;
@@ -43,7 +66,7 @@ bot.on('new_chat_members', (msg) => {
     chats[msg.new_chat_member.id] = {};
   }
   bot.deleteMessage(chatId, msgId);
-  bot.sendMessage(chatId, `<a href="https://t.me/AxelarCoreBot?start=${chatId}_${userId}">CLICK HERE ${msg.new_chat_participant.first_name}</a>`, { parse_mode: 'HTML' }).then(res => {
+  bot.sendMessage(chatId, `Please, <a href="https://t.me/AxelarCoreBot?start=${chatId}_${userId}">${msg.new_chat_participant.first_name}, ➡CLICK HERE </a> to verify you are a human. Otherwise, you will be kicked from the channel.`, { parse_mode: 'HTML' }).then(res => {
     chats[msg.new_chat_member.id].clickHereMsg = res.message_id;
   })
 
@@ -71,6 +94,7 @@ bot.on('left_chat_member', (msg) => {
   const chatId = msg.chat.id;
   const msgId = msg.message_id;
   bot.deleteMessage(chatId, msgId);
+  bot.deleteMessage(chatId, chats[msg.left_chat_member.id].clickHereMsg);
 })
 
 function generateKeyboard(captchValue) {
@@ -167,11 +191,25 @@ bot.on('message', (msg) => {
   const text = msg.text;
 
   if (text === "/start") {
-    bot.sendMessage(chatId, "Welcome!", {
+    bot.sendMessage(chatId, "Welcome to the @AxelarCoreBot! This bot was created for Quantum Community Program. You can use it as Captcha bot for Russian Telegram channel, to do this simply add it to Russian Axelar telegram gtoup. Also you can find here some useful info and official links. Thanks for attention!", {
       reply_markup: {
         inline_keyboard: keyboard
       }
     });
+  } else if (text === "/sendmelinks") {
+    bot.sendMessage(chatId, `<a href="https://t.me/axelarcommunity">🇬🇧English community</a>
+<a href="https://t.me/axelarcommunityTR">🇹🇷French community</a>
+<a href="https://t.me/axelarthai">🇹🇭Thai community</a>
+<a href="https://t.me/axelar_singapore">🇸🇬Singaporean community</a>
+<a href="https://t.me/axelarcommunityKR">🇰🇷Korean community</a>`, { parse_mode: 'HTML' });
+  } else if(text == "/faq_docs") {
+    bot.sendMessage(chatId, "Axelar Documentation: ", {
+      reply_markup: {
+        inline_keyboard: docsKeyboard
+      }
+    });
+  } else if(text == "/about") {
+    bot.sendMessage(chatId, "Axelar is a universal interoperability platform that connects all blockchains through a decentralized network and an SDK of protocols and APIs. Using the network and SDK, developers can efficiently create new connections and integrate their decentralized applications with all blockchain ecosystems creating greater access to users, assets, liquidity and other applications.");
   }
 });
 
@@ -193,7 +231,7 @@ bot.on('callback_query', msg => {
       if (chats[chatId]?.code.toUpperCase() === chats[chatId]?.captchValue) {
         bot.restrictChatMember(chats[chatId].chatId, msg.from.id, { can_send_messages: true })
         delete chats[chatId];
-        return bot.sendMessage(chatId, "Congratulations!");
+        return bot.sendMessage(chatId, "Congratulations! You have passed the capthca. Now you are allowed to send messages in the channel!");
       } else {
         chats[chatId].countAttemps--;
         if (chats[chatId]?.countAttemps <= 0) {
@@ -201,7 +239,8 @@ bot.on('callback_query', msg => {
           chats[chatId].banned = true;
           return bot.sendMessage(chatId, `You have been banned!`);
         }
-        return bot.sendMessage(chatId, `Wrong! Left ${chats[chatId]?.countAttemps} attemps!`);
+        chats[chatId].code = "";
+        return bot.sendMessage(chatId, `Wrong! Left ${chats[chatId]?.countAttemps} attemps. If you fail all of them, you will be banned!`);
       }
     } else {
       chats[chatId].code += data;
@@ -213,6 +252,7 @@ bot.on('callback_query', msg => {
     });
   }
 });
+
 
 
 
